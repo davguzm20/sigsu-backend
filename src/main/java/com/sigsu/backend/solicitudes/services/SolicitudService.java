@@ -225,6 +225,15 @@ public class SolicitudService {
         return SeguimientoResponse.from(seguimientoRepository.save(seguimiento));
     }
 
+    @Transactional(readOnly = true)
+    public SolicitudEntity findVisible(Integer solicitudId, UsuarioEntity user) {
+        SolicitudEntity solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new ResourceNotFoundException(SOLICITUD_NOT_FOUND));
+        checkAccess(solicitud, user);
+
+        return solicitud;
+    }
+
     private RolEnum requiredRole(EstadoSolicitudEnum origen, EstadoSolicitudEnum destino) {
         if (origen == EstadoSolicitudEnum.REGISTRADA && destino == EstadoSolicitudEnum.EN_EVALUACION) {
             return RolEnum.SUPERVISOR;
