@@ -11,4 +11,8 @@ public interface AreaRepository extends JpaRepository<AreaEntity, Integer> {
     List<AreaEntity> findByActivoTrueOrderByNombreAsc();
 
     Optional<AreaEntity> findByIdAndActivoTrue(Integer id);
+
+    boolean existsByCodigo(String codigo);
+
+    boolean existsByNombre(String nombre);
 }

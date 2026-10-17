@@ -64,6 +64,15 @@ public class SolicitudEntity {
     @Column(name = "ubicacion", nullable = false, length = 150)
     private String ubicacion;
 
+    @Column(name = "solucion", columnDefinition = "TEXT")
+    private String solucion;
+
+    @Column(name = "resuelta_en")
+    private LocalDateTime resueltaEn;
+
+    @Column(name = "cerrada_en")
+    private LocalDateTime cerradaEn;
+
     @CreatedDate
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;
@@ -146,6 +155,30 @@ public class SolicitudEntity {
 
     public void setUbicacion(String ubicacion) {
         this.ubicacion = ubicacion;
+    }
+
+    public String getSolucion() {
+        return solucion;
+    }
+
+    public void setSolucion(String solucion) {
+        this.solucion = solucion;
+    }
+
+    public LocalDateTime getResueltaEn() {
+        return resueltaEn;
+    }
+
+    public void setResueltaEn(LocalDateTime resueltaEn) {
+        this.resueltaEn = resueltaEn;
+    }
+
+    public LocalDateTime getCerradaEn() {
+        return cerradaEn;
+    }
+
+    public void setCerradaEn(LocalDateTime cerradaEn) {
+        this.cerradaEn = cerradaEn;
     }
 
     public LocalDateTime getCreadoEn() {

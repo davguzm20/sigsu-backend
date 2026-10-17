@@ -1,9 +1,11 @@
 package com.sigsu.backend.solicitudes.controllers;
 
 import com.sigsu.backend.auth.entities.UsuarioEntity;
+import com.sigsu.backend.solicitudes.dtos.CambiarEstadoRequest;
 import com.sigsu.backend.solicitudes.dtos.ClasificarSolicitudRequest;
 import com.sigsu.backend.solicitudes.dtos.CrearSeguimientoRequest;
 import com.sigsu.backend.solicitudes.dtos.CrearSolicitudRequest;
+import com.sigsu.backend.solicitudes.dtos.HistorialEstadoResponse;
 import com.sigsu.backend.solicitudes.dtos.SeguimientoResponse;
 import com.sigsu.backend.solicitudes.dtos.SolicitudResponse;
 import com.sigsu.backend.solicitudes.entities.EstadoSolicitudEnum;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -75,6 +78,25 @@ public class SolicitudController {
     public ResponseEntity<SolicitudResponse> clasificar(@PathVariable Integer id,
                                                         @Valid @RequestBody ClasificarSolicitudRequest request) {
         return ResponseEntity.ok(solicitudService.clasificar(id, request));
+    }
+
+    @PutMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'TECNICO')")
+    public ResponseEntity<SolicitudResponse> cambiarEstado(@PathVariable Integer id,
+                                                           @Valid @RequestBody CambiarEstadoRequest request,
+                                                           @AuthenticationPrincipal UsuarioEntity user) {
+        return ResponseEntity.ok(solicitudService.cambiarEstado(id, request, user));
+    }
+
+    @GetMapping("/{id}/historial")
+    public ResponseEntity<List<HistorialEstadoResponse>> findHistorial(@PathVariable Integer id,
+                                                                       @AuthenticationPrincipal UsuarioEntity user) {
+        return ResponseEntity.ok(solicitudService.findHistorial(id, user));
+    }
+
+    @GetMapping("/estados")
+    public ResponseEntity<List<String>> estados() {
+        return ResponseEntity.ok(Arrays.stream(EstadoSolicitudEnum.values()).map(Enum::name).toList());
     }
 
     @PostMapping("/{id}/seguimientos")

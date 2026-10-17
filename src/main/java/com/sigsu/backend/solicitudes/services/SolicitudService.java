@@ -2,6 +2,7 @@ package com.sigsu.backend.solicitudes.services;
 
 import com.sigsu.backend.asignaciones.entities.AsignacionEntity;
 import com.sigsu.backend.asignaciones.repositories.AsignacionRepository;
+import com.sigsu.backend.auth.entities.RolEnum;
 import com.sigsu.backend.auth.entities.UsuarioEntity;
 import com.sigsu.backend.catalogos.entities.AreaEntity;
 import com.sigsu.backend.catalogos.entities.CategoriaEntity;
@@ -9,17 +10,22 @@ import com.sigsu.backend.catalogos.entities.PrioridadEntity;
 import com.sigsu.backend.catalogos.repositories.AreaRepository;
 import com.sigsu.backend.catalogos.repositories.CategoriaRepository;
 import com.sigsu.backend.catalogos.repositories.PrioridadRepository;
+import com.sigsu.backend.common.exceptions.BusinessRuleException;
 import com.sigsu.backend.common.exceptions.ForbiddenException;
 import com.sigsu.backend.common.exceptions.ResourceNotFoundException;
+import com.sigsu.backend.solicitudes.dtos.CambiarEstadoRequest;
 import com.sigsu.backend.solicitudes.dtos.ClasificarSolicitudRequest;
 import com.sigsu.backend.solicitudes.dtos.CrearSeguimientoRequest;
 import com.sigsu.backend.solicitudes.dtos.CrearSolicitudRequest;
+import com.sigsu.backend.solicitudes.dtos.HistorialEstadoResponse;
 import com.sigsu.backend.solicitudes.dtos.SeguimientoResponse;
 import com.sigsu.backend.solicitudes.dtos.SolicitudResponse;
 import com.sigsu.backend.solicitudes.entities.EstadoSolicitudEnum;
+import com.sigsu.backend.solicitudes.entities.HistorialEstadoEntity;
 import com.sigsu.backend.solicitudes.entities.SeguimientoEntity;
 import com.sigsu.backend.solicitudes.entities.SolicitudEntity;
 import com.sigsu.backend.solicitudes.entities.TipoSeguimientoEnum;
+import com.sigsu.backend.solicitudes.repositories.HistorialEstadoRepository;
 import com.sigsu.backend.solicitudes.repositories.SeguimientoRepository;
 import com.sigsu.backend.solicitudes.repositories.SolicitudRepository;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -33,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,21 +57,26 @@ public class SolicitudService {
     private static final String CATEGORIA_NOT_FOUND = "Categoría no encontrada";
     private static final String PRIORIDAD_NOT_FOUND = "Prioridad no encontrada";
     private static final String AREA_NOT_FOUND = "Área no encontrada";
+    private static final String SOLUTION_REQUIRED = "Para marcar la solicitud como resuelta hay que registrar la solución";
+    private static final String ASSIGNMENT_REQUIRED = "La solicitud necesita un técnico asignado para pasar a ese estado";
     private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, "creadoEn");
 
     private final SolicitudRepository solicitudRepository;
     private final SeguimientoRepository seguimientoRepository;
     private final AsignacionRepository asignacionRepository;
+    private final HistorialEstadoRepository historialEstadoRepository;
     private final CategoriaRepository categoriaRepository;
     private final PrioridadRepository prioridadRepository;
     private final AreaRepository areaRepository;
 
     public SolicitudService(SolicitudRepository solicitudRepository, SeguimientoRepository seguimientoRepository,
-                            AsignacionRepository asignacionRepository, CategoriaRepository categoriaRepository,
-                            PrioridadRepository prioridadRepository, AreaRepository areaRepository) {
+                            AsignacionRepository asignacionRepository, HistorialEstadoRepository historialEstadoRepository,
+                            CategoriaRepository categoriaRepository, PrioridadRepository prioridadRepository,
+                            AreaRepository areaRepository) {
         this.solicitudRepository = solicitudRepository;
         this.seguimientoRepository = seguimientoRepository;
         this.asignacionRepository = asignacionRepository;
+        this.historialEstadoRepository = historialEstadoRepository;
         this.categoriaRepository = categoriaRepository;
         this.prioridadRepository = prioridadRepository;
         this.areaRepository = areaRepository;
@@ -100,6 +112,62 @@ public class SolicitudService {
         solicitud.setArea(area);
 
         return SolicitudResponse.from(solicitud, activeAssignment(solicitud.getId()));
+    }
+
+    @Transactional
+    public SolicitudResponse cambiarEstado(Integer solicitudId, CambiarEstadoRequest request, UsuarioEntity user) {
+        SolicitudEntity solicitud = solicitudRepository.findByIdForUpdate(solicitudId)
+                .orElseThrow(() -> new ResourceNotFoundException(SOLICITUD_NOT_FOUND));
+
+        EstadoSolicitudEnum origen = solicitud.getEstado();
+        EstadoSolicitudEnum destino = request.getEstado();
+
+        RolEnum requiredRole = requiredRole(origen, destino);
+        if (requiredRole == null) {
+            throw new BusinessRuleException("No se puede pasar de " + origen + " a " + destino);
+        }
+        if (user.getRol() != requiredRole) {
+            throw new ForbiddenException("Su rol no puede mover la solicitud de " + origen + " a " + destino);
+        }
+        if (destino == EstadoSolicitudEnum.ASIGNADA || destino == EstadoSolicitudEnum.EN_ATENCION) {
+            if (!asignacionRepository.existsBySolicitudIdAndFinalizadaEnIsNull(solicitudId)) {
+                throw new BusinessRuleException(ASSIGNMENT_REQUIRED);
+            }
+        }
+        if (destino == EstadoSolicitudEnum.RESUELTA) {
+            if (request.getSolucion() == null || request.getSolucion().isBlank()) {
+                throw new BusinessRuleException(SOLUTION_REQUIRED);
+            }
+            solicitud.setSolucion(request.getSolucion());
+            solicitud.setResueltaEn(LocalDateTime.now());
+        }
+        if (destino == EstadoSolicitudEnum.CERRADA) {
+            solicitud.setCerradaEn(LocalDateTime.now());
+        }
+
+        solicitud.setEstado(destino);
+
+        HistorialEstadoEntity historial = new HistorialEstadoEntity();
+        historial.setSolicitud(solicitud);
+        historial.setEstadoOrigen(origen);
+        historial.setEstadoDestino(destino);
+        historial.setCambiadoPor(user);
+        historial.setCambiadoEn(LocalDateTime.now());
+        historial.setObservacion(request.getObservacion());
+        historialEstadoRepository.save(historial);
+
+        return SolicitudResponse.from(solicitud, activeAssignment(solicitudId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<HistorialEstadoResponse> findHistorial(Integer solicitudId, UsuarioEntity user) {
+        SolicitudEntity solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new ResourceNotFoundException(SOLICITUD_NOT_FOUND));
+        checkAccess(solicitud, user);
+
+        return historialEstadoRepository.findBySolicitudIdOrderByCambiadoEnAsc(solicitudId).stream()
+                .map(HistorialEstadoResponse::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -147,6 +215,25 @@ public class SolicitudService {
         seguimiento.setContenido(request.getContenido());
 
         return SeguimientoResponse.from(seguimientoRepository.save(seguimiento));
+    }
+
+    private RolEnum requiredRole(EstadoSolicitudEnum origen, EstadoSolicitudEnum destino) {
+        if (origen == EstadoSolicitudEnum.REGISTRADA && destino == EstadoSolicitudEnum.EN_EVALUACION) {
+            return RolEnum.SUPERVISOR;
+        }
+        if (origen == EstadoSolicitudEnum.EN_EVALUACION && destino == EstadoSolicitudEnum.ASIGNADA) {
+            return RolEnum.SUPERVISOR;
+        }
+        if (origen == EstadoSolicitudEnum.ASIGNADA && destino == EstadoSolicitudEnum.EN_ATENCION) {
+            return RolEnum.TECNICO;
+        }
+        if (origen == EstadoSolicitudEnum.EN_ATENCION && destino == EstadoSolicitudEnum.RESUELTA) {
+            return RolEnum.TECNICO;
+        }
+        if (origen == EstadoSolicitudEnum.RESUELTA && destino == EstadoSolicitudEnum.CERRADA) {
+            return RolEnum.SUPERVISOR;
+        }
+        return null;
     }
 
     private AsignacionEntity activeAssignment(Integer solicitudId) {

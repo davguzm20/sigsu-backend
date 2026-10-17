@@ -11,4 +11,8 @@ public interface CategoriaRepository extends JpaRepository<CategoriaEntity, Inte
     List<CategoriaEntity> findByActivoTrueOrderByNombreAsc();
 
     Optional<CategoriaEntity> findByIdAndActivoTrue(Integer id);
+
+    boolean existsByCodigo(String codigo);
+
+    boolean existsByNombre(String nombre);
 }

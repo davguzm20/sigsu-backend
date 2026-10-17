@@ -8,7 +8,13 @@ import java.util.Optional;
 
 public interface PrioridadRepository extends JpaRepository<PrioridadEntity, Integer> {
 
-    List<PrioridadEntity> findByActivoTrueOrderByIdAsc();
+    List<PrioridadEntity> findByActivoTrueOrderByNivelAsc();
 
     Optional<PrioridadEntity> findByIdAndActivoTrue(Integer id);
+
+    boolean existsByCodigo(String codigo);
+
+    boolean existsByNombre(String nombre);
+
+    boolean existsByNivel(Byte nivel);
 }
