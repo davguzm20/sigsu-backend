@@ -12,6 +12,7 @@ import com.sigsu.backend.solicitudes.dtos.SolicitudResponse;
 import com.sigsu.backend.solicitudes.entities.EstadoSolicitudEnum;
 import com.sigsu.backend.solicitudes.services.EvidenciaService;
 import com.sigsu.backend.solicitudes.services.SolicitudService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -46,12 +47,14 @@ public class SolicitudController {
 
     @PostMapping
     @PreAuthorize("hasRole('SOLICITANTE')")
+    @Operation(summary = "Registra una solicitud")
     public ResponseEntity<SolicitudResponse> register(@Valid @RequestBody CrearSolicitudRequest request,
                                                       @AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(solicitudService.register(request, user));
     }
 
     @GetMapping
+    @Operation(summary = "Lista las solicitudes según el rol y los filtros")
     public ResponseEntity<List<SolicitudResponse>> search(
             @AuthenticationPrincipal UsuarioEntity user,
             @RequestParam(required = false) EstadoSolicitudEnum estado,
@@ -67,12 +70,14 @@ public class SolicitudController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Devuelve el detalle de una solicitud")
     public ResponseEntity<SolicitudResponse> findDetail(@PathVariable Integer id,
                                                         @AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.ok(solicitudService.findDetail(id, user));
     }
 
     @GetMapping("/codigo/{codigo}")
+    @Operation(summary = "Devuelve el detalle por el código de la solicitud")
     public ResponseEntity<SolicitudResponse> findDetailByCodigo(@PathVariable String codigo,
                                                                 @AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.ok(solicitudService.findDetailByCodigo(codigo, user));
@@ -80,6 +85,7 @@ public class SolicitudController {
 
     @PutMapping("/{id}/clasificacion")
     @PreAuthorize("hasRole('SUPERVISOR')")
+    @Operation(summary = "Clasifica la solicitud con categoría, prioridad, área y plazo")
     public ResponseEntity<SolicitudResponse> clasificar(@PathVariable Integer id,
                                                         @Valid @RequestBody ClasificarSolicitudRequest request) {
         return ResponseEntity.ok(solicitudService.clasificar(id, request));
@@ -87,6 +93,7 @@ public class SolicitudController {
 
     @PutMapping("/{id}/estado")
     @PreAuthorize("hasAnyRole('SUPERVISOR', 'TECNICO')")
+    @Operation(summary = "Cambia el estado según la transición válida para el rol")
     public ResponseEntity<SolicitudResponse> cambiarEstado(@PathVariable Integer id,
                                                            @Valid @RequestBody CambiarEstadoRequest request,
                                                            @AuthenticationPrincipal UsuarioEntity user) {
@@ -94,24 +101,35 @@ public class SolicitudController {
     }
 
     @GetMapping("/{id}/historial")
+    @Operation(summary = "Devuelve el historial de estados de la solicitud")
     public ResponseEntity<List<HistorialEstadoResponse>> findHistorial(@PathVariable Integer id,
                                                                        @AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.ok(solicitudService.findHistorial(id, user));
     }
 
     @GetMapping("/estados")
+    @Operation(summary = "Lista los estados del ciclo de vida")
     public ResponseEntity<List<String>> estados() {
         return ResponseEntity.ok(Arrays.stream(EstadoSolicitudEnum.values()).map(Enum::name).toList());
     }
 
     @PostMapping("/{id}/seguimientos")
+    @Operation(summary = "Agrega un comentario a la solicitud")
     public ResponseEntity<SeguimientoResponse> addSeguimiento(@PathVariable Integer id,
                                                               @Valid @RequestBody CrearSeguimientoRequest request,
                                                               @AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(solicitudService.addSeguimiento(id, request, user));
     }
 
+    @GetMapping("/{id}/seguimientos")
+    @Operation(summary = "Lista los comentarios de la solicitud")
+    public ResponseEntity<List<SeguimientoResponse>> findSeguimientos(@PathVariable Integer id,
+                                                                      @AuthenticationPrincipal UsuarioEntity user) {
+        return ResponseEntity.ok(solicitudService.findSeguimientos(id, user));
+    }
+
     @PostMapping("/{id}/evidencias")
+    @Operation(summary = "Adjunta una evidencia a la solicitud")
     public ResponseEntity<EvidenciaResponse> agregarEvidencia(@PathVariable Integer id,
                                                               @RequestParam("archivo") MultipartFile archivo,
                                                               @RequestParam(required = false) Integer seguimientoId,
@@ -121,6 +139,7 @@ public class SolicitudController {
     }
 
     @GetMapping("/{id}/evidencias")
+    @Operation(summary = "Lista las evidencias de la solicitud")
     public ResponseEntity<List<EvidenciaResponse>> findEvidencias(@PathVariable Integer id,
                                                                   @AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.ok(evidenciaService.listar(id, user));

@@ -258,6 +258,15 @@ public class SolicitudService {
         return null;
     }
 
+    @Transactional(readOnly = true)
+    public List<SeguimientoResponse> findSeguimientos(Integer solicitudId, UsuarioEntity user) {
+        findVisible(solicitudId, user);
+
+        return seguimientoRepository.findBySolicitudIdOrderByCreadoEnAsc(solicitudId).stream()
+                .map(SeguimientoResponse::from)
+                .toList();
+    }
+
     private AsignacionEntity activeAssignment(Integer solicitudId) {
         return asignacionRepository.findFirstBySolicitudIdAndFinalizadaEnIsNull(solicitudId).orElse(null);
     }
