@@ -2,6 +2,7 @@ package com.sigsu.backend.dashboard.controllers;
 
 import com.sigsu.backend.dashboard.dtos.DashboardResponse;
 import com.sigsu.backend.dashboard.services.DashboardService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +25,7 @@ public class DashboardController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPERVISOR', 'ADMINISTRADOR')")
+    @Operation(summary = "Devuelve los indicadores de supervisión con filtros opcionales")
     public ResponseEntity<DashboardResponse> dashboard(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,

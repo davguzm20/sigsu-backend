@@ -4,6 +4,7 @@ import com.sigsu.backend.asignaciones.dtos.AsignacionResponse;
 import com.sigsu.backend.asignaciones.dtos.AsignarTecnicoRequest;
 import com.sigsu.backend.asignaciones.services.AsignacionService;
 import com.sigsu.backend.auth.entities.UsuarioEntity;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class AsignacionController {
 
     @PostMapping
     @PreAuthorize("hasRole('SUPERVISOR')")
+    @Operation(summary = "Asigna un técnico a la solicitud")
     public ResponseEntity<AsignacionResponse> asignar(@PathVariable Integer solicitudId,
                                                       @Valid @RequestBody AsignarTecnicoRequest request,
                                                       @AuthenticationPrincipal UsuarioEntity user) {
