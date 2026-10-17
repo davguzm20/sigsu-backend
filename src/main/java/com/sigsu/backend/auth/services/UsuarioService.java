@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class UsuarioService {
 
@@ -40,6 +42,13 @@ public class UsuarioService {
         user.setActivo(true);
 
         return UsuarioResponse.from(usuarioRepository.save(user));
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioResponse> listar() {
+        return usuarioRepository.findAll().stream()
+                .map(UsuarioResponse::from)
+                .toList();
     }
 
     @Transactional
