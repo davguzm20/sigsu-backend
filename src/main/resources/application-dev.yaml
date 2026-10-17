@@ -16,3 +16,6 @@ security:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
