@@ -1,6 +1,7 @@
 package com.sigsu.backend.solicitudes.controllers;
 
 import com.sigsu.backend.auth.entities.UsuarioEntity;
+import com.sigsu.backend.solicitudes.dtos.ClasificarSolicitudRequest;
 import com.sigsu.backend.solicitudes.dtos.CrearSeguimientoRequest;
 import com.sigsu.backend.solicitudes.dtos.CrearSolicitudRequest;
 import com.sigsu.backend.solicitudes.dtos.SeguimientoResponse;
@@ -16,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,8 +49,13 @@ public class SolicitudController {
             @RequestParam(required = false) EstadoSolicitudEnum estado,
             @RequestParam(required = false) String texto,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
-        return ResponseEntity.ok(solicitudService.search(user, estado, texto, desde, hasta));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) Integer categoriaId,
+            @RequestParam(required = false) Integer prioridadId,
+            @RequestParam(required = false) Integer responsableId,
+            @RequestParam(required = false) Boolean sinAsignar) {
+        return ResponseEntity.ok(solicitudService.search(user, estado, texto, desde, hasta, categoriaId, prioridadId,
+                responsableId, sinAsignar));
     }
 
     @GetMapping("/{id}")
@@ -61,6 +68,13 @@ public class SolicitudController {
     public ResponseEntity<SolicitudResponse> findDetailByCodigo(@PathVariable String codigo,
                                                                 @AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.ok(solicitudService.findDetailByCodigo(codigo, user));
+    }
+
+    @PutMapping("/{id}/clasificacion")
+    @PreAuthorize("hasRole('SUPERVISOR')")
+    public ResponseEntity<SolicitudResponse> clasificar(@PathVariable Integer id,
+                                                        @Valid @RequestBody ClasificarSolicitudRequest request) {
+        return ResponseEntity.ok(solicitudService.clasificar(id, request));
     }
 
     @PostMapping("/{id}/seguimientos")

@@ -1,6 +1,9 @@
 package com.sigsu.backend.solicitudes.entities;
 
 import com.sigsu.backend.auth.entities.UsuarioEntity;
+import com.sigsu.backend.catalogos.entities.AreaEntity;
+import com.sigsu.backend.catalogos.entities.CategoriaEntity;
+import com.sigsu.backend.catalogos.entities.PrioridadEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -35,6 +38,18 @@ public class SolicitudEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "solicitante_id", nullable = false)
     private UsuarioEntity solicitante;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id")
+    private CategoriaEntity categoria;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prioridad_id")
+    private PrioridadEntity prioridad;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private AreaEntity area;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 20)
@@ -75,6 +90,30 @@ public class SolicitudEntity {
 
     public void setSolicitante(UsuarioEntity solicitante) {
         this.solicitante = solicitante;
+    }
+
+    public CategoriaEntity getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(CategoriaEntity categoria) {
+        this.categoria = categoria;
+    }
+
+    public PrioridadEntity getPrioridad() {
+        return prioridad;
+    }
+
+    public void setPrioridad(PrioridadEntity prioridad) {
+        this.prioridad = prioridad;
+    }
+
+    public AreaEntity getArea() {
+        return area;
+    }
+
+    public void setArea(AreaEntity area) {
+        this.area = area;
     }
 
     public EstadoSolicitudEnum getEstado() {

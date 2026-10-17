@@ -1,13 +1,17 @@
 package com.sigsu.backend.auth.entities;
 
+import com.sigsu.backend.catalogos.entities.AreaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -43,6 +47,10 @@ public class UsuarioEntity {
 
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private AreaEntity area;
 
     @CreatedDate
     @Column(name = "creado_en", nullable = false, updatable = false)
@@ -102,6 +110,14 @@ public class UsuarioEntity {
 
     public void setActivo(Boolean activo) {
         this.activo = activo;
+    }
+
+    public AreaEntity getArea() {
+        return area;
+    }
+
+    public void setArea(AreaEntity area) {
+        this.area = area;
     }
 
     public LocalDateTime getCreadoEn() {

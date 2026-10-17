@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -38,6 +39,12 @@ public class UsuarioController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<UsuarioResponse>> listar() {
         return ResponseEntity.ok(usuarioService.listar());
+    }
+
+    @GetMapping("/tecnicos")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'ADMINISTRADOR')")
+    public ResponseEntity<List<UsuarioResponse>> listarTecnicos(@RequestParam(required = false) Integer areaId) {
+        return ResponseEntity.ok(usuarioService.listarTecnicos(areaId));
     }
 
     @PutMapping("/{id}/rol")

@@ -3,6 +3,7 @@ package com.sigsu.backend.auth.services;
 import com.sigsu.backend.auth.dtos.CambiarRolRequest;
 import com.sigsu.backend.auth.dtos.CrearUsuarioRequest;
 import com.sigsu.backend.auth.dtos.UsuarioResponse;
+import com.sigsu.backend.auth.entities.RolEnum;
 import com.sigsu.backend.auth.entities.UsuarioEntity;
 import com.sigsu.backend.auth.repositories.UsuarioRepository;
 import com.sigsu.backend.common.exceptions.ConflictException;
@@ -47,6 +48,17 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public List<UsuarioResponse> listar() {
         return usuarioRepository.findAll().stream()
+                .map(UsuarioResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioResponse> listarTecnicos(Integer areaId) {
+        List<UsuarioEntity> tecnicos = areaId == null
+                ? usuarioRepository.findByRolAndActivoTrueOrderByNombresAsc(RolEnum.TECNICO)
+                : usuarioRepository.findByRolAndAreaIdAndActivoTrueOrderByNombresAsc(RolEnum.TECNICO, areaId);
+
+        return tecnicos.stream()
                 .map(UsuarioResponse::from)
                 .toList();
     }
