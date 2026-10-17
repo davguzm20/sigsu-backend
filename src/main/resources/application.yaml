@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: sigsu-backend
+
+  config:
+    import: optional:file:.env[.properties]
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE}
