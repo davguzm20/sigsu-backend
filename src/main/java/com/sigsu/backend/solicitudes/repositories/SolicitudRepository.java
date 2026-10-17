@@ -8,5 +8,7 @@ import java.util.Optional;
 
 public interface SolicitudRepository extends JpaRepository<SolicitudEntity, Integer>, JpaSpecificationExecutor<SolicitudEntity> {
 
+    Optional<SolicitudEntity> findByCodigo(String codigo);
+
     Optional<SolicitudEntity> findFirstByCodigoStartingWithOrderByCodigoDesc(String prefix);
 }

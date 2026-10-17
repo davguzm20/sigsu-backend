@@ -12,20 +12,22 @@ public class SolicitudResponse {
     private final String titulo;
     private final String descripcion;
     private final String ubicacion;
-    private final UsuarioResumenResponse solicitante;
+    private final Integer solicitanteId;
+    private final String solicitanteNombre;
     private final LocalDateTime creadoEn;
     private final LocalDateTime actualizadoEn;
 
     public SolicitudResponse(Integer id, String codigo, String estado, String titulo, String descripcion,
-                            String ubicacion, UsuarioResumenResponse solicitante, LocalDateTime creadoEn,
-                            LocalDateTime actualizadoEn) {
+                             String ubicacion, Integer solicitanteId, String solicitanteNombre, LocalDateTime creadoEn,
+                             LocalDateTime actualizadoEn) {
         this.id = id;
         this.codigo = codigo;
         this.estado = estado;
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.ubicacion = ubicacion;
-        this.solicitante = solicitante;
+        this.solicitanteId = solicitanteId;
+        this.solicitanteNombre = solicitanteNombre;
         this.creadoEn = creadoEn;
         this.actualizadoEn = actualizadoEn;
     }
@@ -38,7 +40,8 @@ public class SolicitudResponse {
                 solicitud.getTitulo(),
                 solicitud.getDescripcion(),
                 solicitud.getUbicacion(),
-                UsuarioResumenResponse.from(solicitud.getSolicitante()),
+                solicitud.getSolicitante().getId(),
+                solicitud.getSolicitante().getNombres() + " " + solicitud.getSolicitante().getApellidos(),
                 solicitud.getCreadoEn(),
                 solicitud.getActualizadoEn());
     }
@@ -67,8 +70,12 @@ public class SolicitudResponse {
         return ubicacion;
     }
 
-    public UsuarioResumenResponse getSolicitante() {
-        return solicitante;
+    public Integer getSolicitanteId() {
+        return solicitanteId;
+    }
+
+    public String getSolicitanteNombre() {
+        return solicitanteNombre;
     }
 
     public LocalDateTime getCreadoEn() {
