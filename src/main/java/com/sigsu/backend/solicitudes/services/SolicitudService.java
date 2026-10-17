@@ -59,6 +59,7 @@ public class SolicitudService {
     private static final String AREA_NOT_FOUND = "Área no encontrada";
     private static final String SOLUTION_REQUIRED = "Para marcar la solicitud como resuelta hay que registrar la solución";
     private static final String ASSIGNMENT_REQUIRED = "La solicitud necesita un técnico asignado para pasar a ese estado";
+    private static final String FECHA_LIMITE_INVALIDA = "La fecha límite debe ser posterior al registro de la solicitud";
     private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, "creadoEn");
 
     private final SolicitudRepository solicitudRepository;
@@ -110,6 +111,13 @@ public class SolicitudService {
         solicitud.setCategoria(categoria);
         solicitud.setPrioridad(prioridad);
         solicitud.setArea(area);
+
+        if (request.getFechaLimite() != null) {
+            if (!request.getFechaLimite().isAfter(LocalDateTime.now())) {
+                throw new BusinessRuleException(FECHA_LIMITE_INVALIDA);
+            }
+            solicitud.setFechaLimite(request.getFechaLimite());
+        }
 
         return SolicitudResponse.from(solicitud, activeAssignment(solicitud.getId()));
     }

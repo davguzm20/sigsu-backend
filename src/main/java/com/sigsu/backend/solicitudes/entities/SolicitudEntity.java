@@ -67,6 +67,9 @@ public class SolicitudEntity {
     @Column(name = "solucion", columnDefinition = "TEXT")
     private String solucion;
 
+    @Column(name = "fecha_limite")
+    private LocalDateTime fechaLimite;
+
     @Column(name = "resuelta_en")
     private LocalDateTime resueltaEn;
 
@@ -171,6 +174,14 @@ public class SolicitudEntity {
 
     public void setResueltaEn(LocalDateTime resueltaEn) {
         this.resueltaEn = resueltaEn;
+    }
+
+    public LocalDateTime getFechaLimite() {
+        return fechaLimite;
+    }
+
+    public void setFechaLimite(LocalDateTime fechaLimite) {
+        this.fechaLimite = fechaLimite;
     }
 
     public LocalDateTime getCerradaEn() {
