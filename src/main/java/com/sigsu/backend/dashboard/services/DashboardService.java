@@ -2,10 +2,13 @@ package com.sigsu.backend.dashboard.services;
 
 import com.sigsu.backend.asignaciones.entities.AsignacionEntity;
 import com.sigsu.backend.asignaciones.repositories.AsignacionRepository;
+import com.sigsu.backend.catalogos.entities.CategoriaEntity_;
+import com.sigsu.backend.catalogos.entities.PrioridadEntity_;
 import com.sigsu.backend.dashboard.dtos.DashboardResponse;
 import com.sigsu.backend.dashboard.dtos.IndicadorResponse;
 import com.sigsu.backend.solicitudes.entities.EstadoSolicitudEnum;
 import com.sigsu.backend.solicitudes.entities.SolicitudEntity;
+import com.sigsu.backend.solicitudes.entities.SolicitudEntity_;
 import com.sigsu.backend.solicitudes.repositories.SolicitudRepository;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Sort;
@@ -31,7 +34,7 @@ public class DashboardService {
             EstadoSolicitudEnum.EN_ATENCION, EstadoSolicitudEnum.RESUELTA, EstadoSolicitudEnum.CERRADA);
     private static final Set<EstadoSolicitudEnum> RESUELTAS = Set.of(
             EstadoSolicitudEnum.RESUELTA, EstadoSolicitudEnum.CERRADA);
-    private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, "creadoEn");
+    private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, SolicitudEntity_.creadoEn.getName());
 
     private final SolicitudRepository solicitudRepository;
     private final AsignacionRepository asignacionRepository;
@@ -147,16 +150,16 @@ public class DashboardService {
             List<Predicate> predicates = new ArrayList<>();
 
             if (desde != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("creadoEn"), desde.atStartOfDay()));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(SolicitudEntity_.creadoEn), desde.atStartOfDay()));
             }
             if (hasta != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("creadoEn"), hasta.atTime(LocalTime.MAX)));
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(SolicitudEntity_.creadoEn), hasta.atTime(LocalTime.MAX)));
             }
             if (categoriaId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("categoria").get("id"), categoriaId));
+                predicates.add(criteriaBuilder.equal(root.get(SolicitudEntity_.categoria).get(CategoriaEntity_.id), categoriaId));
             }
             if (prioridadId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("prioridad").get("id"), prioridadId));
+                predicates.add(criteriaBuilder.equal(root.get(SolicitudEntity_.prioridad).get(PrioridadEntity_.id), prioridadId));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

@@ -1,12 +1,16 @@
 package com.sigsu.backend.solicitudes.services;
 
 import com.sigsu.backend.asignaciones.entities.AsignacionEntity;
+import com.sigsu.backend.asignaciones.entities.AsignacionEntity_;
 import com.sigsu.backend.asignaciones.repositories.AsignacionRepository;
 import com.sigsu.backend.auth.entities.RolEnum;
 import com.sigsu.backend.auth.entities.UsuarioEntity;
+import com.sigsu.backend.auth.entities.UsuarioEntity_;
 import com.sigsu.backend.catalogos.entities.AreaEntity;
 import com.sigsu.backend.catalogos.entities.CategoriaEntity;
+import com.sigsu.backend.catalogos.entities.CategoriaEntity_;
 import com.sigsu.backend.catalogos.entities.PrioridadEntity;
+import com.sigsu.backend.catalogos.entities.PrioridadEntity_;
 import com.sigsu.backend.catalogos.repositories.AreaRepository;
 import com.sigsu.backend.catalogos.repositories.CategoriaRepository;
 import com.sigsu.backend.catalogos.repositories.PrioridadRepository;
@@ -24,6 +28,7 @@ import com.sigsu.backend.solicitudes.entities.EstadoSolicitudEnum;
 import com.sigsu.backend.solicitudes.entities.HistorialEstadoEntity;
 import com.sigsu.backend.solicitudes.entities.SeguimientoEntity;
 import com.sigsu.backend.solicitudes.entities.SolicitudEntity;
+import com.sigsu.backend.solicitudes.entities.SolicitudEntity_;
 import com.sigsu.backend.solicitudes.entities.TipoSeguimientoEnum;
 import com.sigsu.backend.solicitudes.repositories.HistorialEstadoRepository;
 import com.sigsu.backend.solicitudes.repositories.SeguimientoRepository;
@@ -60,7 +65,7 @@ public class SolicitudService {
     private static final String SOLUTION_REQUIRED = "Para marcar la solicitud como resuelta hay que registrar la solución";
     private static final String ASSIGNMENT_REQUIRED = "La solicitud necesita un técnico asignado para pasar a ese estado";
     private static final String FECHA_LIMITE_INVALIDA = "La fecha límite debe ser posterior al registro de la solicitud";
-    private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, "creadoEn");
+    private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, SolicitudEntity_.creadoEn.getName());
 
     private final SolicitudRepository solicitudRepository;
     private final SeguimientoRepository seguimientoRepository;
@@ -292,22 +297,22 @@ public class SolicitudService {
             predicates.add(buildScope(user, root, criteriaBuilder, query));
 
             if (estado != null) {
-                predicates.add(criteriaBuilder.equal(root.get("estado"), estado));
+                predicates.add(criteriaBuilder.equal(root.get(SolicitudEntity_.estado), estado));
             }
             if (texto != null && !texto.isBlank()) {
                 predicates.add(buildTextFilter(texto, root, criteriaBuilder));
             }
             if (desde != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("creadoEn"), desde.atStartOfDay()));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(SolicitudEntity_.creadoEn), desde.atStartOfDay()));
             }
             if (hasta != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("creadoEn"), hasta.atTime(LocalTime.MAX)));
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(SolicitudEntity_.creadoEn), hasta.atTime(LocalTime.MAX)));
             }
             if (categoriaId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("categoria").get("id"), categoriaId));
+                predicates.add(criteriaBuilder.equal(root.get(SolicitudEntity_.categoria).get(CategoriaEntity_.id), categoriaId));
             }
             if (prioridadId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("prioridad").get("id"), prioridadId));
+                predicates.add(criteriaBuilder.equal(root.get(SolicitudEntity_.prioridad).get(PrioridadEntity_.id), prioridadId));
             }
             if (responsableId != null) {
                 predicates.add(criteriaBuilder.exists(buildActiveAssignment(query, criteriaBuilder, root, responsableId)));
@@ -324,7 +329,7 @@ public class SolicitudService {
     private Predicate buildScope(UsuarioEntity user, Root<SolicitudEntity> root, CriteriaBuilder criteriaBuilder,
                                  CriteriaQuery<?> query) {
         return switch (user.getRol()) {
-            case SOLICITANTE -> criteriaBuilder.equal(root.get("solicitante").get("id"), user.getId());
+            case SOLICITANTE -> criteriaBuilder.equal(root.get(SolicitudEntity_.solicitante).get(UsuarioEntity_.id), user.getId());
             case TECNICO -> criteriaBuilder.exists(buildActiveAssignment(query, criteriaBuilder, root, user.getId()));
             case SUPERVISOR, ADMINISTRADOR -> criteriaBuilder.conjunction();
         };
@@ -336,11 +341,11 @@ public class SolicitudService {
         Root<AsignacionEntity> asignacion = subquery.from(AsignacionEntity.class);
 
         List<Predicate> predicates = new ArrayList<>();
-        predicates.add(criteriaBuilder.equal(asignacion.get("solicitud").get("id"), solicitudRoot.get("id")));
-        predicates.add(criteriaBuilder.isNull(asignacion.get("finalizadaEn")));
+        predicates.add(criteriaBuilder.equal(asignacion.get(AsignacionEntity_.solicitud).get(SolicitudEntity_.id), solicitudRoot.get(SolicitudEntity_.id)));
+        predicates.add(criteriaBuilder.isNull(asignacion.get(AsignacionEntity_.finalizadaEn)));
 
         if (tecnicoId != null) {
-            predicates.add(criteriaBuilder.equal(asignacion.get("tecnico").get("id"), tecnicoId));
+            predicates.add(criteriaBuilder.equal(asignacion.get(AsignacionEntity_.tecnico).get(UsuarioEntity_.id), tecnicoId));
         }
 
         subquery.select(criteriaBuilder.literal(1));
@@ -353,9 +358,9 @@ public class SolicitudService {
         String pattern = "%" + texto.trim().toLowerCase() + "%";
 
         return criteriaBuilder.or(
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("codigo")), pattern),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("titulo")), pattern),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("descripcion")), pattern));
+                criteriaBuilder.like(criteriaBuilder.lower(root.get(SolicitudEntity_.codigo)), pattern),
+                criteriaBuilder.like(criteriaBuilder.lower(root.get(SolicitudEntity_.titulo)), pattern),
+                criteriaBuilder.like(criteriaBuilder.lower(root.get(SolicitudEntity_.descripcion)), pattern));
     }
 
     private String generateCode() {
