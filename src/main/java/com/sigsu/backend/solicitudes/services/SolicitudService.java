@@ -3,10 +3,15 @@ package com.sigsu.backend.solicitudes.services;
 import com.sigsu.backend.auth.entities.UsuarioEntity;
 import com.sigsu.backend.common.exceptions.ForbiddenException;
 import com.sigsu.backend.common.exceptions.ResourceNotFoundException;
+import com.sigsu.backend.solicitudes.dtos.CrearSeguimientoRequest;
 import com.sigsu.backend.solicitudes.dtos.CrearSolicitudRequest;
+import com.sigsu.backend.solicitudes.dtos.SeguimientoResponse;
 import com.sigsu.backend.solicitudes.dtos.SolicitudResponse;
 import com.sigsu.backend.solicitudes.entities.EstadoSolicitudEnum;
+import com.sigsu.backend.solicitudes.entities.SeguimientoEntity;
 import com.sigsu.backend.solicitudes.entities.SolicitudEntity;
+import com.sigsu.backend.solicitudes.entities.TipoSeguimientoEnum;
+import com.sigsu.backend.solicitudes.repositories.SeguimientoRepository;
 import com.sigsu.backend.solicitudes.repositories.SolicitudRepository;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
@@ -31,9 +36,11 @@ public class SolicitudService {
     private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, "creadoEn");
 
     private final SolicitudRepository solicitudRepository;
+    private final SeguimientoRepository seguimientoRepository;
 
-    public SolicitudService(SolicitudRepository solicitudRepository) {
+    public SolicitudService(SolicitudRepository solicitudRepository, SeguimientoRepository seguimientoRepository) {
         this.solicitudRepository = solicitudRepository;
+        this.seguimientoRepository = seguimientoRepository;
     }
 
     @Transactional
@@ -75,6 +82,21 @@ public class SolicitudService {
         checkAccess(solicitud, user);
 
         return SolicitudResponse.from(solicitud);
+    }
+
+    @Transactional
+    public SeguimientoResponse addSeguimiento(Integer solicitudId, CrearSeguimientoRequest request, UsuarioEntity user) {
+        SolicitudEntity solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new ResourceNotFoundException(SOLICITUD_NOT_FOUND));
+        checkAccess(solicitud, user);
+
+        SeguimientoEntity seguimiento = new SeguimientoEntity();
+        seguimiento.setSolicitud(solicitud);
+        seguimiento.setCreadoPor(user);
+        seguimiento.setTipo(TipoSeguimientoEnum.COMENTARIO);
+        seguimiento.setContenido(request.getContenido());
+
+        return SeguimientoResponse.from(seguimientoRepository.save(seguimiento));
     }
 
     private void checkAccess(SolicitudEntity solicitud, UsuarioEntity user) {

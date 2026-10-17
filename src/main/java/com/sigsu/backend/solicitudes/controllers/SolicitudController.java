@@ -1,7 +1,9 @@
 package com.sigsu.backend.solicitudes.controllers;
 
 import com.sigsu.backend.auth.entities.UsuarioEntity;
+import com.sigsu.backend.solicitudes.dtos.CrearSeguimientoRequest;
 import com.sigsu.backend.solicitudes.dtos.CrearSolicitudRequest;
+import com.sigsu.backend.solicitudes.dtos.SeguimientoResponse;
 import com.sigsu.backend.solicitudes.dtos.SolicitudResponse;
 import com.sigsu.backend.solicitudes.entities.EstadoSolicitudEnum;
 import com.sigsu.backend.solicitudes.services.SolicitudService;
@@ -59,5 +61,12 @@ public class SolicitudController {
     public ResponseEntity<SolicitudResponse> findDetailByCodigo(@PathVariable String codigo,
                                                                 @AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.ok(solicitudService.findDetailByCodigo(codigo, user));
+    }
+
+    @PostMapping("/{id}/seguimientos")
+    public ResponseEntity<SeguimientoResponse> addSeguimiento(@PathVariable Integer id,
+                                                              @Valid @RequestBody CrearSeguimientoRequest request,
+                                                              @AuthenticationPrincipal UsuarioEntity user) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(solicitudService.addSeguimiento(id, request, user));
     }
 }
