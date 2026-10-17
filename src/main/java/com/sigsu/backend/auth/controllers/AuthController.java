@@ -33,4 +33,9 @@ public class AuthController {
     public ResponseEntity<UsuarioResponse> getProfile(@AuthenticationPrincipal UsuarioEntity user) {
         return ResponseEntity.ok(authService.getAuthenticatedUser(user));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.noContent().build();
+    }
 }
