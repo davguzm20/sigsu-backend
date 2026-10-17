@@ -14,11 +14,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/api")
 public class CatalogoController {
 
     private final CatalogoService catalogoService;
@@ -27,75 +29,75 @@ public class CatalogoController {
         this.catalogoService = catalogoService;
     }
 
-    @GetMapping("/api/categorias")
+    @GetMapping("/categorias")
     public ResponseEntity<List<CatalogoResponse>> categorias() {
         return ResponseEntity.ok(catalogoService.listarCategorias());
     }
 
-    @GetMapping("/api/prioridades")
+    @GetMapping("/prioridades")
     public ResponseEntity<List<CatalogoResponse>> prioridades() {
         return ResponseEntity.ok(catalogoService.listarPrioridades());
     }
 
-    @GetMapping("/api/areas")
+    @GetMapping("/areas")
     public ResponseEntity<List<CatalogoResponse>> areas() {
         return ResponseEntity.ok(catalogoService.listarAreas());
     }
 
-    @PostMapping("/api/categorias")
+    @PostMapping("/categorias")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CatalogoResponse> crearCategoria(@Valid @RequestBody CatalogoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(catalogoService.crearCategoria(request));
     }
 
-    @PutMapping("/api/categorias/{id}")
+    @PutMapping("/categorias/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CatalogoResponse> actualizarCategoria(@PathVariable Integer id,
                                                                 @Valid @RequestBody CatalogoRequest request) {
         return ResponseEntity.ok(catalogoService.actualizarCategoria(id, request));
     }
 
-    @DeleteMapping("/api/categorias/{id}")
+    @DeleteMapping("/categorias/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarCategoria(@PathVariable Integer id) {
         catalogoService.eliminarCategoria(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/api/prioridades")
+    @PostMapping("/prioridades")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CatalogoResponse> crearPrioridad(@Valid @RequestBody PrioridadRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(catalogoService.crearPrioridad(request));
     }
 
-    @PutMapping("/api/prioridades/{id}")
+    @PutMapping("/prioridades/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CatalogoResponse> actualizarPrioridad(@PathVariable Integer id,
                                                                 @Valid @RequestBody PrioridadRequest request) {
         return ResponseEntity.ok(catalogoService.actualizarPrioridad(id, request));
     }
 
-    @DeleteMapping("/api/prioridades/{id}")
+    @DeleteMapping("/prioridades/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarPrioridad(@PathVariable Integer id) {
         catalogoService.eliminarPrioridad(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/api/areas")
+    @PostMapping("/areas")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CatalogoResponse> crearArea(@Valid @RequestBody CatalogoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(catalogoService.crearArea(request));
     }
 
-    @PutMapping("/api/areas/{id}")
+    @PutMapping("/areas/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CatalogoResponse> actualizarArea(@PathVariable Integer id,
                                                            @Valid @RequestBody CatalogoRequest request) {
         return ResponseEntity.ok(catalogoService.actualizarArea(id, request));
     }
 
-    @DeleteMapping("/api/areas/{id}")
+    @DeleteMapping("/areas/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarArea(@PathVariable Integer id) {
         catalogoService.eliminarArea(id);
