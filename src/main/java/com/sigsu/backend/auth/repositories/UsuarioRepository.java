@@ -13,6 +13,8 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Integer>
 
     boolean existsByCorreo(String correo);
 
+    boolean existsByCorreoAndIdNot(String correo, Integer id);
+
     List<UsuarioEntity> findByRolAndActivoTrueOrderByNombresAsc(RolEnum rol);
 
     List<UsuarioEntity> findByRolAndAreaIdAndActivoTrueOrderByNombresAsc(RolEnum rol, Integer areaId);

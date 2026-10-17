@@ -1,14 +1,18 @@
 package com.sigsu.backend.auth.controllers;
 
+import com.sigsu.backend.auth.dtos.ActualizarUsuarioRequest;
 import com.sigsu.backend.auth.dtos.CambiarRolRequest;
 import com.sigsu.backend.auth.dtos.CrearUsuarioRequest;
 import com.sigsu.backend.auth.dtos.UsuarioResponse;
 import com.sigsu.backend.auth.entities.RolEnum;
+import com.sigsu.backend.auth.entities.UsuarioEntity;
 import com.sigsu.backend.auth.services.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,10 +58,27 @@ public class UsuarioController {
         return ResponseEntity.ok(Arrays.stream(RolEnum.values()).map(Enum::name).toList());
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<UsuarioResponse> actualizar(@PathVariable Integer id,
+                                                      @Valid @RequestBody ActualizarUsuarioRequest request,
+                                                      @AuthenticationPrincipal UsuarioEntity user) {
+        return ResponseEntity.ok(usuarioService.actualizar(id, request, user));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id,
+                                         @AuthenticationPrincipal UsuarioEntity user) {
+        usuarioService.eliminar(id, user);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{id}/rol")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioResponse> cambiarRol(@PathVariable Integer id,
-                                                     @Valid @RequestBody CambiarRolRequest request) {
-        return ResponseEntity.ok(usuarioService.cambiarRol(id, request));
+                                                      @Valid @RequestBody CambiarRolRequest request,
+                                                      @AuthenticationPrincipal UsuarioEntity user) {
+        return ResponseEntity.ok(usuarioService.cambiarRol(id, request, user));
     }
 }
