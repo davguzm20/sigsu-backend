@@ -65,7 +65,7 @@ public class SolicitudService {
     private static final String SOLUTION_REQUIRED = "Para marcar la solicitud como resuelta hay que registrar la solución";
     private static final String ASSIGNMENT_REQUIRED = "La solicitud necesita un técnico asignado para pasar a ese estado";
     private static final String FECHA_LIMITE_INVALIDA = "La fecha límite debe ser posterior al registro de la solicitud";
-    private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, SolicitudEntity_.creadoEn.getName());
+    private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, SolicitudEntity_.CREADO_EN);
 
     private final SolicitudRepository solicitudRepository;
     private final SeguimientoRepository seguimientoRepository;

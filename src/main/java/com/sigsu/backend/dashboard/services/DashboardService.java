@@ -34,7 +34,7 @@ public class DashboardService {
             EstadoSolicitudEnum.EN_ATENCION, EstadoSolicitudEnum.RESUELTA, EstadoSolicitudEnum.CERRADA);
     private static final Set<EstadoSolicitudEnum> RESUELTAS = Set.of(
             EstadoSolicitudEnum.RESUELTA, EstadoSolicitudEnum.CERRADA);
-    private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, SolicitudEntity_.creadoEn.getName());
+    private static final Sort CREATED_DESC = Sort.by(Sort.Direction.DESC, SolicitudEntity_.CREADO_EN);
 
     private final SolicitudRepository solicitudRepository;
     private final AsignacionRepository asignacionRepository;
