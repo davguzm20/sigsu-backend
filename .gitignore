@@ -50,3 +50,5 @@ $RECYCLE.BIN/
 .env
 .env.*
 !.env.example
+.observability-secrets/
+.playwright-mcp/

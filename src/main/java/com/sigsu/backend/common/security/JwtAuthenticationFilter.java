@@ -2,6 +2,9 @@ package com.sigsu.backend.common.security;
 
 import com.sigsu.backend.auth.entities.UsuarioEntity;
 import com.sigsu.backend.auth.repositories.UsuarioRepository;
+import io.jsonwebtoken.JwtException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +22,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final Logger LOG = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
@@ -44,9 +48,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void authenticate(String token, HttpServletRequest request) {
+        String email;
         try {
-            String email = jwtService.extractEmail(token);
+            email = jwtService.extractEmail(token);
+        } catch (JwtException | IllegalArgumentException ex) {
+            // Token inválido, vencido o vacío: rechazo habitual, sin datos del token ni stack trace.
+            SecurityContextHolder.clearContext();
+            return;
+        } catch (RuntimeException ex) {
+            technicalFailure("token_processing", ex);
+            return;
+        }
 
+        try {
             if (SecurityContextHolder.getContext().getAuthentication() != null) {
                 return;
             }
@@ -60,8 +74,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     });
         } catch (RuntimeException ex) {
-            SecurityContextHolder.clearContext();
+            technicalFailure("user_lookup", ex);
         }
+    }
+
+    private void technicalFailure(String stage, RuntimeException ex) {
+        SecurityContextHolder.clearContext();
+        // Conservar los frames útiles, no mensajes/causas que puedan contener correo, SQL o JWT.
+        RuntimeException safe = new RuntimeException("JWT technical failure: " + stage);
+        safe.setStackTrace(ex.getStackTrace());
+        LOG.atError().addKeyValue("event", "auth.jwt.technical_failure")
+                .addKeyValue("stage", stage).addKeyValue("errorType", ex.getClass().getName())
+                .setCause(safe).log("JWT authentication technical failure");
     }
 
     private List<SimpleGrantedAuthority> authorities(UsuarioEntity user) {

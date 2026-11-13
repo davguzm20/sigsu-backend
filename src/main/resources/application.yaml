@@ -7,3 +7,23 @@ spring:
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE}
+
+# El perfil observability habilita el registro Prometheus y permite exportar trazas.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      discovery:
+        enabled: false
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+  prometheus:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    export:
+      enabled: false

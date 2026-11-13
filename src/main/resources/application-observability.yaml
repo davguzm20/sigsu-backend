@@ -1,0 +1,41 @@
+# Activar junto con dev; solo salud pública y métricas con cuenta técnica.
+spring:
+  main:
+    banner-mode: "off"
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      add:
+        service: ${spring.application.name}
+management:
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  tracing:
+    baggage:
+      enabled: false
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+    export:
+      # Boot 4.1 condiciona los propagadores a este interruptor general.
+      # Mantener el exportador remoto deshabilitado por separado.
+      enabled: true
+      otlp:
+        enabled: ${TRACING_EXPORT_ENABLED:false}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          transport: http
+          endpoint: ${OTLP_TRACES_ENDPOINT:http://host.docker.internal:4318/v1/traces}

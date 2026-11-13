@@ -50,6 +50,6 @@ public class AdminUserInitializer implements ApplicationRunner {
 
         usuarioRepository.save(user);
 
-        log.info("Usuario administrador creado: {}", email);
+        log.info("Usuario administrador inicial creado");
     }
 }

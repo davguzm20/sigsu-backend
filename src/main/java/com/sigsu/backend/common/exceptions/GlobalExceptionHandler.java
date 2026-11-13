@@ -1,6 +1,8 @@
 package com.sigsu.backend.common.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.sigsu.backend.common.observability.RequestLoggingFilter;
+import org.springframework.web.filter.ServerHttpObservationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -49,7 +51,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(StorageException.class)
     public ResponseEntity<ApiErrorResponse> handleStorage(StorageException ex, HttpServletRequest request) {
-        LOGGER.error("Fallo de almacenamiento en {} {}", request.getMethod(), request.getRequestURI(), ex);
+        ServerHttpObservationFilter.findObservationContext(request).ifPresent(context -> context.setError(ex));
+        LOGGER.error("Fallo de almacenamiento en {} {}", request.getMethod(), RequestLoggingFilter.safePath(request), ex);
         return build(HttpStatus.BAD_GATEWAY, ex.getMessage(), request, List.of());
     }
 
@@ -108,7 +111,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        LOGGER.error("Error inesperado en {} {}", request.getMethod(), request.getRequestURI(), ex);
+        ServerHttpObservationFilter.findObservationContext(request).ifPresent(context -> context.setError(ex));
+        LOGGER.error("Error inesperado en {} {}", request.getMethod(), RequestLoggingFilter.safePath(request), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error inesperado", request, List.of());
     }
 

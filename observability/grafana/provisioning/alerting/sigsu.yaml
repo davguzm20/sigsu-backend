@@ -1,0 +1,380 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "SIGSU: señales técnicas",
+      "folder": "Observabilidad",
+      "interval": "10s",
+      "rules": [
+        {
+          "uid": "sigsu-scrape",
+          "title": "SIGSU: fallo de recolección",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "queryType": "",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "sigsu-prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "sigsu-prometheus"
+                },
+                "expr": "1 - min(up{job=\"sigsu-backend\"})",
+                "instant": true,
+                "range": false,
+                "intervalMs": 5000,
+                "maxDataPoints": 43200,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "refId": "B",
+                "type": "classic_conditions",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "A"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    },
+                    "type": "query"
+                  }
+                ]
+              }
+            }
+          ],
+          "dashboardUid": "sigsu-tecnico",
+          "panelId": 2,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "1m",
+          "keepFiringFor": "0s",
+          "annotations": {
+            "summary": "Prometheus no puede recolectar métricas del backend",
+            "description": "up=0 sostenido 1m. Puede ser red, autenticación o proceso; no demuestra por sí solo caída funcional de toda la aplicación."
+          },
+          "labels": {
+            "service": "sigsu-backend",
+            "scope": "observability",
+            "severity": "critical",
+            "rule_uid": "sigsu-scrape"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "sigsu-http5xx",
+          "title": "SIGSU: porcentaje elevado de 5xx",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "queryType": "",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "sigsu-prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "sigsu-prometheus"
+                },
+                "expr": "((100 * sum(increase(http_server_requests_seconds_count{job=\"sigsu-backend\",uri=~\"/api/.*\",status=~\"5..\"}[5m])) / sum(increase(http_server_requests_seconds_count{job=\"sigsu-backend\",uri=~\"/api/.*\"}[5m]))) > bool 5) and on() (sum(increase(http_server_requests_seconds_count{job=\"sigsu-backend\",uri=~\"/api/.*\"}[5m])) >= 100) and on() (min(up{job=\"sigsu-backend\"}) == 1)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 5000,
+                "maxDataPoints": 43200,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "refId": "B",
+                "type": "classic_conditions",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "A"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    },
+                    "type": "query"
+                  }
+                ]
+              }
+            }
+          ],
+          "dashboardUid": "sigsu-tecnico",
+          "panelId": 4,
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "for": "2m",
+          "keepFiringFor": "0s",
+          "annotations": {
+            "summary": "Errores 5xx elevados en rutas API resueltas",
+            "description": "Ventana 5m; más de 5% y al menos 100 peticiones. Condición sostenida 2m. Excluye Actuator y UNKNOWN; NoData no prueba ausencia de errores."
+          },
+          "labels": {
+            "service": "sigsu-backend",
+            "scope": "observability",
+            "severity": "warning",
+            "rule_uid": "sigsu-http5xx"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "sigsu-p95",
+          "title": "SIGSU: latencia p95 elevada",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "queryType": "",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "sigsu-prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "sigsu-prometheus"
+                },
+                "expr": "(histogram_quantile(0.95, sum by(le)(rate(http_server_requests_seconds_bucket{job=\"sigsu-backend\",uri=~\"/api/.*\"}[5m]))) > bool 1) and on() (sum(increase(http_server_requests_seconds_count{job=\"sigsu-backend\",uri=~\"/api/.*\"}[5m])) >= 50) and on() (min(up{job=\"sigsu-backend\"}) == 1)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 5000,
+                "maxDataPoints": 43200,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "refId": "B",
+                "type": "classic_conditions",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "A"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    },
+                    "type": "query"
+                  }
+                ]
+              }
+            }
+          ],
+          "dashboardUid": "sigsu-tecnico",
+          "panelId": 5,
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "for": "2m",
+          "keepFiringFor": "0s",
+          "annotations": {
+            "summary": "Latencia p95 elevada en rutas API resueltas",
+            "description": "Ventana 5m; p95 mayor que 1s con al menos 50 observaciones. Condición sostenida 2m. NoData con poco tráfico es no evaluable, no garantía de buena latencia."
+          },
+          "labels": {
+            "service": "sigsu-backend",
+            "scope": "observability",
+            "severity": "warning",
+            "rule_uid": "sigsu-p95"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "sigsu-cloudinary",
+          "title": "SIGSU: fallos reiterados de Cloudinary",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "queryType": "",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "sigsu-prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "sigsu-prometheus"
+                },
+                "expr": "(sum(increase(storage_upload_seconds_count{job=\"sigsu-backend\",provider=\"cloudinary\",result=~\"http_error|connection_error|invalid_response|unexpected_error\"}[10m])) >= bool 3) and on() (sum(increase(storage_upload_seconds_count{job=\"sigsu-backend\",provider=\"cloudinary\"}[10m])) > 0) and on() (min(up{job=\"sigsu-backend\"}) == 1)",
+                "instant": true,
+                "range": false,
+                "intervalMs": 5000,
+                "maxDataPoints": 43200,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "refId": "B",
+                "type": "classic_conditions",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "A"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last",
+                      "params": []
+                    },
+                    "type": "query"
+                  }
+                ]
+              }
+            }
+          ],
+          "dashboardUid": "sigsu-tecnico",
+          "panelId": 17,
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "for": "1m",
+          "keepFiringFor": "0s",
+          "annotations": {
+            "summary": "Fallos reiterados de almacenamiento Cloudinary",
+            "description": "Al menos 3 fallos en 10m, sostenidos 1m. Cuenta resultados acotados instrumentados; sin operaciones no es un fallo."
+          },
+          "labels": {
+            "service": "sigsu-backend",
+            "scope": "observability",
+            "severity": "warning",
+            "rule_uid": "sigsu-cloudinary"
+          },
+          "isPaused": false
+        }
+      ]
+    }
+  ],
+  "contactPoints": [
+    {
+      "orgId": 1,
+      "name": "SIGSU webhook local (demostración)",
+      "receivers": [
+        {
+          "uid": "sigsu-local-webhook",
+          "type": "webhook",
+          "disableResolveMessage": false,
+          "settings": {
+            "url": "http://alert-receiver:8080/alerts",
+            "httpMethod": "POST",
+            "maxAlerts": "20"
+          }
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "orgId": 1,
+      "receiver": "SIGSU webhook local (demostración)",
+      "group_by": [
+        "grafana_folder",
+        "alertname"
+      ],
+      "group_wait": "5s",
+      "group_interval": "10s",
+      "repeat_interval": "4h"
+    }
+  ]
+}

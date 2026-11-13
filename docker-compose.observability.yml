@@ -1,0 +1,119 @@
+services:
+  backend:
+    image: sigsu-backend:technical-dashboard
+    build: .
+    container_name: sigsu-backend-observability
+    restart: unless-stopped
+    env_file:
+      - .env
+      - .env.metrics
+    environment:
+      SPRING_PROFILES_ACTIVE: dev,observability
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      PORT: "8080"
+      TRACING_EXPORT_ENABLED: "true"
+      OTLP_TRACES_ENDPOINT: http://tempo:4318/v1/traces
+    ports:
+      - "127.0.0.1:8082:8080"
+    networks: [default, observability]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      tempo:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    secrets: [metrics_username, metrics_password]
+    networks: [observability, interfaces]
+
+  tempo-init:
+    image: busybox:1.37.0
+    user: "0:0"
+    command: ["chown", "10001:10001", "/var/tempo"]
+    volumes:
+      - tempo-data:/var/tempo
+    networks: [observability]
+    restart: "no"
+
+  tempo:
+    image: grafana/tempo:3.1.1
+    user: "10001:10001"
+    restart: unless-stopped
+    command: ["-target=all", "-config.file=/etc/tempo.yaml", "-config.expand-env=true"]
+    environment:
+      TEMPO_RETENTION: ${TEMPO_RETENTION:-24h}
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    depends_on:
+      tempo-init:
+        condition: service_completed_successfully
+    networks: [observability]
+    stop_grace_period: 60s
+
+  grafana:
+    image: grafana/grafana:13.3.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER__FILE: /run/secrets/grafana_username
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_password
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    secrets: [grafana_username, grafana_password]
+    networks: [observability, interfaces]
+
+  alert-receiver:
+    image: sigsu-alert-receiver:local
+    build: ./observability/webhook
+    restart: unless-stopped
+    volumes:
+      - alert-notifications-data:/data
+    networks: [observability]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+networks:
+  observability:
+    internal: true
+  interfaces:
+
+volumes:
+  prometheus-data:
+  tempo-data:
+  grafana-data:
+  alert-notifications-data:
+
+secrets:
+  metrics_username:
+    file: ./.observability-secrets/metrics_username
+  metrics_password:
+    file: ./.observability-secrets/metrics_password
+  grafana_username:
+    file: ./.observability-secrets/grafana_username
+  grafana_password:
+    file: ./.observability-secrets/grafana_password

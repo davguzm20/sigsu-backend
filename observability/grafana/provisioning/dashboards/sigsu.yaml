@@ -1,0 +1,13 @@
+apiVersion: 1
+providers:
+  - name: sigsu-technical
+    orgId: 1
+    folder: Observabilidad
+    folderUid: sigsu-observabilidad
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    # >10s fuerza polling: los eventos del bind mount no son fiables en Docker Desktop.
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

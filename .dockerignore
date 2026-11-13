@@ -8,3 +8,5 @@ target
 docker-compose.yml
 Dockerfile
 evidencias
+.observability-secrets
+.playwright-mcp
