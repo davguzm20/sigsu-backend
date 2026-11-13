@@ -27,6 +27,7 @@ public class SolicitudResponse {
     private final Integer responsableId;
     private final String responsableNombre;
     private final String solucion;
+    private final LocalDateTime fechaLimite;
     private final LocalDateTime resueltaEn;
     private final LocalDateTime cerradaEn;
     private final LocalDateTime creadoEn;
@@ -35,8 +36,9 @@ public class SolicitudResponse {
     public SolicitudResponse(Integer id, String codigo, String estado, String titulo, String descripcion, String ubicacion,
                              Integer solicitanteId, String solicitanteNombre, Integer categoriaId, String categoriaNombre,
                              Integer prioridadId, String prioridadNombre, Integer areaId, String areaNombre,
-                             Integer responsableId, String responsableNombre, String solucion, LocalDateTime resueltaEn,
-                             LocalDateTime cerradaEn, LocalDateTime creadoEn, LocalDateTime actualizadoEn) {
+                             Integer responsableId, String responsableNombre, String solucion, LocalDateTime fechaLimite,
+                             LocalDateTime resueltaEn, LocalDateTime cerradaEn, LocalDateTime creadoEn,
+                             LocalDateTime actualizadoEn) {
         this.id = id;
         this.codigo = codigo;
         this.estado = estado;
@@ -54,6 +56,7 @@ public class SolicitudResponse {
         this.responsableId = responsableId;
         this.responsableNombre = responsableNombre;
         this.solucion = solucion;
+        this.fechaLimite = fechaLimite;
         this.resueltaEn = resueltaEn;
         this.cerradaEn = cerradaEn;
         this.creadoEn = creadoEn;
@@ -83,6 +86,7 @@ public class SolicitudResponse {
                 asignacion == null ? null : asignacion.getTecnico().getId(),
                 asignacion == null ? null : asignacion.getTecnico().getNombres() + " " + asignacion.getTecnico().getApellidos(),
                 solicitud.getSolucion(),
+                solicitud.getFechaLimite(),
                 solicitud.getResueltaEn(),
                 solicitud.getCerradaEn(),
                 solicitud.getCreadoEn(),
@@ -155,6 +159,10 @@ public class SolicitudResponse {
 
     public String getSolucion() {
         return solucion;
+    }
+
+    public LocalDateTime getFechaLimite() {
+        return fechaLimite;
     }
 
     public LocalDateTime getResueltaEn() {
