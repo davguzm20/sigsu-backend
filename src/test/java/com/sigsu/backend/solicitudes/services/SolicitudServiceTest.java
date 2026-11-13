@@ -9,6 +9,7 @@ import com.sigsu.backend.catalogos.repositories.PrioridadRepository;
 import com.sigsu.backend.common.exceptions.BusinessRuleException;
 import com.sigsu.backend.common.exceptions.ForbiddenException;
 import com.sigsu.backend.solicitudes.dtos.CambiarEstadoRequest;
+import com.sigsu.backend.solicitudes.dtos.CrearSolicitudRequest;
 import com.sigsu.backend.solicitudes.dtos.SolicitudResponse;
 import com.sigsu.backend.solicitudes.entities.EstadoSolicitudEnum;
 import com.sigsu.backend.solicitudes.entities.HistorialEstadoEntity;
@@ -25,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -274,6 +276,67 @@ class SolicitudServiceTest {
         assertThat(historial.getObservacion()).isEqualTo("Cierre conforme");
     }
 
+    @Test
+    @DisplayName("UT-ACC-01 el solicitante dueño consulta su solicitud")
+    void ownerCanViewOwnRequest() {
+        SolicitudEntity solicitud = solicitud(EstadoSolicitudEnum.REGISTRADA);
+        when(solicitudRepository.findById(1)).thenReturn(Optional.of(solicitud));
+
+        SolicitudResponse response = solicitudService.findDetail(1, user(1, RolEnum.SOLICITANTE));
+
+        assertThat(response.getCodigo()).isEqualTo("SOL-2026-000001");
+    }
+
+    @Test
+    @DisplayName("UT-ACC-02 el solicitante ajeno recibe 403")
+    void rejectsForeignRequest() {
+        when(solicitudRepository.findById(1)).thenReturn(Optional.of(solicitud(EstadoSolicitudEnum.REGISTRADA)));
+
+        assertThatThrownBy(() -> solicitudService.findDetail(1, user(2, RolEnum.SOLICITANTE)))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("No tiene permiso para consultar esta solicitud");
+    }
+
+    @Test
+    @DisplayName("UT-ACC-03 el técnico asignado consulta la solicitud")
+    void assignedTechnicianCanViewRequest() {
+        when(solicitudRepository.findById(1)).thenReturn(Optional.of(solicitud(EstadoSolicitudEnum.ASIGNADA)));
+        when(asignacionRepository.existsBySolicitudIdAndTecnicoIdAndFinalizadaEnIsNull(1, 10)).thenReturn(true);
+
+        SolicitudResponse response = solicitudService.findDetail(1, user(10, RolEnum.TECNICO));
+
+        assertThat(response.getCodigo()).isEqualTo("SOL-2026-000001");
+    }
+
+    @Test
+    @DisplayName("UT-ACC-04 el técnico no asignado recibe 403")
+    void rejectsRequestForUnassignedTechnician() {
+        when(solicitudRepository.findById(1)).thenReturn(Optional.of(solicitud(EstadoSolicitudEnum.ASIGNADA)));
+        when(asignacionRepository.existsBySolicitudIdAndTecnicoIdAndFinalizadaEnIsNull(1, 10)).thenReturn(false);
+
+        assertThatThrownBy(() -> solicitudService.findDetail(1, user(10, RolEnum.TECNICO)))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("No tiene permiso para consultar esta solicitud");
+    }
+
+    @Test
+    @DisplayName("UT-SOL-17 genera el consecutivo del año")
+    void generatesYearSequence() {
+        String prefix = "SOL-" + LocalDate.now().getYear() + "-";
+        SolicitudEntity previous = new SolicitudEntity();
+        previous.setCodigo(prefix + "000001");
+        when(solicitudRepository.findFirstByCodigoStartingWithOrderByCodigoDesc(prefix))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(previous));
+        when(solicitudRepository.save(any(SolicitudEntity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        SolicitudResponse first = solicitudService.register(createRequest(), user(1, RolEnum.SOLICITANTE));
+        SolicitudResponse second = solicitudService.register(createRequest(), user(1, RolEnum.SOLICITANTE));
+
+        assertThat(first.getCodigo()).isEqualTo(prefix + "000001");
+        assertThat(second.getCodigo()).isEqualTo(prefix + "000002");
+    }
 
     private SolicitudEntity given(EstadoSolicitudEnum estado) {
         SolicitudEntity solicitud = solicitud(estado);
@@ -299,6 +362,13 @@ class SolicitudServiceTest {
         return request;
     }
 
+    private CrearSolicitudRequest createRequest() {
+        CrearSolicitudRequest request = new CrearSolicitudRequest();
+        request.setTitulo("Falla de red");
+        request.setDescripcion("Sin conexión");
+        request.setUbicacion("Laboratorio 3");
+        return request;
+    }
 
     private UsuarioEntity user(RolEnum rol) {
         return user(1, rol);
