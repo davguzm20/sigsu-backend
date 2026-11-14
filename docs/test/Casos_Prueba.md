@@ -1,6 +1,6 @@
 # Casos de prueba
 
-Fecha de ejecución: 14/11/2026. Ambiente: local, JDK 21 y MySQL 8.4 en Testcontainers. Resultado: 96 pruebas ejecutadas, 96 pasaron y 0 fallaron. Evidencia: `target/surefire-reports/`.
+Fecha de ejecución: 14/11/2026. Ambientes: local con JDK 21 y MySQL 8.4 en Testcontainers, y GitHub Actions con JDK 21 (Temurin) y MySQL 8.4 en Testcontainers. Resultado: 96 pruebas ejecutadas, 96 pasaron y 0 fallaron. Evidencia: `target/surefire-reports/` y la corrida de CI https://github.com/davguzm20/sigsu-backend/actions/runs/43572208754, ejecutada por `.github/workflows/ci-backend.yml` con `./mvnw -B clean verify` en 1 minuto 2 segundos.
 
 ## Unitarias
 
