@@ -1,0 +1,26 @@
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    clean-disabled: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+security:
+  jwt:
+    secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+    expiration-ms: 3600000
+
+cloudinary:
+  cloud-name: test
+  api-key: test
+  api-secret: test
+  folder: sigsu/evidencias
+
+cors:
+  allowed-origins: http://localhost:5173
