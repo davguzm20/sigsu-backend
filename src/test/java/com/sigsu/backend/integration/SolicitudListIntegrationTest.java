@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 
 import java.time.LocalDateTime;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -22,12 +23,14 @@ class SolicitudListIntegrationTest extends IntegrationTestBase {
         UsuarioEntity owner = createUser("owner", RolEnum.SOLICITANTE);
         UsuarioEntity other = createUser("other", RolEnum.SOLICITANTE);
         SolicitudEntity own = createSolicitud(owner, EstadoSolicitudEnum.REGISTRADA);
+        SolicitudEntity secondOwn = createSolicitud(owner, EstadoSolicitudEnum.REGISTRADA);
         createSolicitud(other, EstadoSolicitudEnum.REGISTRADA);
 
         mockMvc.perform(get("/api/solicitudes").header(HttpHeaders.AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].codigo").value(own.getCodigo()));
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[*].codigo")
+                        .value(containsInAnyOrder(own.getCodigo(), secondOwn.getCodigo())));
     }
 
     @Test
@@ -37,13 +40,16 @@ class SolicitudListIntegrationTest extends IntegrationTestBase {
         UsuarioEntity tecnico = createUser("tec", RolEnum.TECNICO);
         UsuarioEntity supervisor = createUser("sup", RolEnum.SUPERVISOR);
         SolicitudEntity assigned = createSolicitud(solicitante, EstadoSolicitudEnum.ASIGNADA);
+        SolicitudEntity secondAssigned = createSolicitud(solicitante, EstadoSolicitudEnum.ASIGNADA);
         assign(assigned, tecnico, supervisor, null);
+        assign(secondAssigned, tecnico, supervisor, null);
         createSolicitud(solicitante, EstadoSolicitudEnum.REGISTRADA);
 
         mockMvc.perform(get("/api/solicitudes").header(HttpHeaders.AUTHORIZATION, bearer(tecnico)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].codigo").value(assigned.getCodigo()));
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[*].codigo")
+                        .value(containsInAnyOrder(assigned.getCodigo(), secondAssigned.getCodigo())));
     }
 
     @Test
